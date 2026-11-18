@@ -218,3 +218,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ---- korail-notifier ----
+# 비공개 문서 (GitHub에 올리지 않음)
+PRIVATE_README.md
+PRIVATE_*.md
+# 시크릿/설정
+.env
+.env.*
+!.env.example
+# 런타임 상태 파일
+state/
+*.state.json

@@ -1,0 +1,7 @@
+.git
+.env
+.env.*
+PRIVATE_*.md
+docs/
+test/
+__pycache__/

@@ -1,3 +1,64 @@
+korail-notifier
+===============
+
+[carpedm20/korail2](https://github.com/carpedm20/korail2) 를 **Python 3.10** 으로 포팅하고,
+**일반실 빈자리 / 입석+좌석**이 생기면 **텔레그램으로 알림**을 보내는 감시 기능을 추가한 포크입니다.
+자동 예매는 하지 않습니다. 알림을 받으면 코레일톡 앱에서 직접 예매하세요.
+
+> ⚠️ **현재 상태 (2026-11 확인)**: 코레일 서버가 이 라이브러리의 요청에 `MACRO ERROR`
+> (앱 버전 업데이트 요구)를 응답하며 차단하고 있습니다. 이 경우 notifier 는 텔레그램으로
+> 차단 사실을 알리고 **재시도 없이 종료**합니다. 차단 회피 기능은 제공하지 않습니다.
+
+### 알림 조건 (일반실 기준, 특실 제외)
+
+| `SEAT_MODE` | 알림 조건 |
+|---|---|
+| `seat` | 일반실 좌석 예약 가능 |
+| `seat_or_standing` | 일반실 좌석 **또는** 입석+좌석 구매 가능 |
+
+- 같은 열차는 한 번만 알리고, 매진됐다가 다시 풀리면 다시 알립니다.
+- 조회 간격 기본 5분, **최소 3분** (서버 부하 방지를 위해 강제).
+- 연속 실패 시 간격을 늘리고(최대 60분), 3회 연속 실패하면 텔레그램으로 알립니다.
+- 입석 판별(`Train.has_standing_seat`)은 공식 문서가 없어 실측 검증이 필요합니다.
+
+### 빠른 시작
+
+```bash
+python3.10 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env          # 값 채우기 (.env 는 git 에 올라가지 않음)
+python -m notifier --test-telegram   # 텔레그램 연결 확인
+python -m notifier                   # 감시 시작
+```
+
+Docker:
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+docker compose logs -f
+```
+
+텔레그램 설정: [@BotFather](https://t.me/BotFather) 에서 `/newbot` → 토큰을 `TELEGRAM_BOT_TOKEN` 에,
+봇에게 아무 메시지나 보낸 뒤 `https://api.telegram.org/bot<TOKEN>/getUpdates` 의 `chat.id` 를 `TELEGRAM_CHAT_ID` 에 넣습니다.
+
+### 테스트
+
+```bash
+python -m unittest test.test_notifier
+```
+
+### 원본 대비 변경점 (Python 3.10 포팅)
+
+- Python 2 호환 코드 및 `six` 의존성 제거, f-string/타입힌트 적용
+- 클래스 변수로 공유되던 `requests` 세션을 인스턴스별로 분리
+- 모든 요청에 timeout 적용, `datetime.utcnow()` → KST timezone-aware
+- `cancel()` 이 GET 에 `data=` 를 넘겨 파라미터가 전송되지 않던 버그 수정
+- `MACRO ERROR` 응답을 `MacroBlockedError` 로 구분
+- 로그인 없이 조회만 할 때는 `pycryptodome` 를 import 하지 않음
+- 원본 저장소의 `korail.py`(하드코딩된 계정 정보 포함 예제) 삭제
+
+---
 
 Legal disclaimer
 ---

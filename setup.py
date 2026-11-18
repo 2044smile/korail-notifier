@@ -21,27 +21,19 @@ Links
 
 
 """
-from __future__ import with_statement
-
-try:
-    from setuptools import setup
-except ImportError:
-    from ez_setup import use_setuptools
-    use_setuptools()
-    from setuptools import setup
+from setuptools import setup
 
 # detect the current version
-version = '0.4.0'
+version = '0.5.0'
 
-import codecs
-
-with codecs.open('README.rst', 'r', encoding='utf8') as f:
+with open('README.rst', encoding='utf8') as f:
     long_desc = f.read()
 
 setup(
     name='korail2',
-    packages=['korail2'],
+    packages=['korail2', 'notifier'],
     version=version,
+    python_requires='>=3.10',
     description='Korail(www.letskorail.com) wrapper for Python',
     long_description=long_desc,
     license='BSD License',
@@ -56,21 +48,15 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.1',
-        'Programming Language :: Python :: 3.2',
-        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: Implementation :: CPython',
-        'Programming Language :: Python :: Implementation :: PyPy',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
     ],
     install_requires=[
-        'requests',
-        'six',
-        'PyCryptodome'
+        'requests>=2.31',
+        'PyCryptodome>=3.19',
+        'python-dotenv>=1.0',
     ],
 )

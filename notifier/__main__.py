@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import signal
 import sys
 import time
@@ -80,7 +81,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--once", action="store_true", help="한 번만 조회하고 종료 (cron 용)")
     parser.add_argument("--test-telegram", action="store_true", help="텔레그램 테스트 메시지만 전송")
     parser.add_argument("-v", "--verbose", action="store_true")
+    trip = parser.add_argument_group("여정 (.env 값보다 우선)")
+    trip.add_argument("--from", dest="dep", help="출발역 (예: '울산(통도사)')")
+    trip.add_argument("--to", dest="arr", help="도착역 (예: 서울)")
+    trip.add_argument("--date", help="YYYY-MM-DD")
+    trip.add_argument("--after", help="이 시각 이후 출발 (HH:MM)")
+    trip.add_argument("--before", help="이 시각 이전 출발 (HH:MM)")
+    trip.add_argument("--mode", choices=["seat", "seat_or_standing"], help="알림 조건")
     args = parser.parse_args(argv)
+
+    overrides = {
+        "WATCH_DEP": args.dep, "WATCH_ARR": args.arr, "WATCH_DATE": args.date,
+        "WATCH_TIME_FROM": args.after, "WATCH_TIME_TO": args.before, "SEAT_MODE": args.mode,
+    }
+    os.environ.update({k: v for k, v in overrides.items() if v})
 
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,

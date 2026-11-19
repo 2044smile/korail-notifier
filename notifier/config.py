@@ -7,12 +7,28 @@ from enum import Enum
 
 from korail2 import TrainType
 
+def _load_env_file(path: str = ".env") -> None:
+    """python-dotenv 가 없을 때의 최소 .env 로더 (이미 설정된 환경변수는 덮어쓰지 않음)."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        return
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        value = value.split(" #", 1)[0].strip().strip("'\"")
+        os.environ.setdefault(key.strip(), value)
+
+
 try:  # python-dotenv 가 있으면 .env 자동 로드
     from dotenv import load_dotenv
 
     load_dotenv()
 except ImportError:  # pragma: no cover
-    pass
+    _load_env_file()
 
 # 서버에 부담을 주지 않도록 최소 조회 간격을 강제한다.
 MIN_INTERVAL_MINUTES = 3

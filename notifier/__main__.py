@@ -76,10 +76,53 @@ def run(config: Config, once: bool = False) -> int:
     return 0
 
 
+def _set_env_value(key: str, value: str, path: str = ".env") -> None:
+    try:
+        with open(path, encoding="utf-8") as f:
+            lines = f.read().splitlines()
+    except FileNotFoundError:
+        lines = []
+    for i, line in enumerate(lines):
+        if line.startswith(f"{key}="):
+            lines[i] = f"{key}={value}"
+            break
+    else:
+        lines.append(f"{key}={value}")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def get_chat_id() -> int:
+    from .telegram import find_chat_ids
+
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+    if not token:
+        print(".env 의 TELEGRAM_BOT_TOKEN 을 먼저 채워주세요 (BotFather 가 준 토큰)", file=sys.stderr)
+        return 1
+    try:
+        chats = find_chat_ids(token)
+    except (ValueError, requests.RequestException) as e:
+        print(f"조회 실패: {e}", file=sys.stderr)
+        return 1
+    if not chats:
+        print("메시지를 찾지 못했습니다. 텔레그램에서 내 봇을 열고 /start 를 보낸 뒤 다시 실행하세요.")
+        return 1
+    for chat_id, name in chats:
+        print(f"chat_id={chat_id}  ({name})")
+    if len(chats) == 1:
+        _set_env_value("TELEGRAM_CHAT_ID", chats[0][0])
+        print(".env 의 TELEGRAM_CHAT_ID 에 저장했습니다.")
+    else:
+        print("여러 개가 나왔습니다. 본인 것을 .env 의 TELEGRAM_CHAT_ID 에 넣어주세요.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="notifier", description="코레일 빈자리 텔레그램 알림")
     parser.add_argument("--once", action="store_true", help="한 번만 조회하고 종료 (cron 용)")
     parser.add_argument("--test-telegram", action="store_true", help="텔레그램 테스트 메시지만 전송")
+    parser.add_argument("--get-chat-id", action="store_true",
+                        help="봇에게 메시지를 보낸 뒤 실행하면 TELEGRAM_CHAT_ID 를 찾아 .env 에 저장")
     parser.add_argument("-v", "--verbose", action="store_true")
     trip = parser.add_argument_group("여정 (.env 값보다 우선)")
     trip.add_argument("--from", dest="dep", help="출발역 (예: '울산(통도사)')")
@@ -102,6 +145,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     # urllib3 디버그 로그에 텔레그램 토큰(URL)이 찍히지 않도록
     logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+    if args.get_chat_id:
+        return get_chat_id()
 
     try:
         config = Config.from_env()

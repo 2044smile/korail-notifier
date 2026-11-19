@@ -8,6 +8,21 @@ import requests
 log = logging.getLogger(__name__)
 
 
+def find_chat_ids(token: str, timeout: float = 10) -> list[tuple[str, str]]:
+    """봇에게 메시지를 보낸 사용자들의 (chat_id, 이름) 목록을 getUpdates 로 조회."""
+    r = requests.get(f"https://api.telegram.org/bot{token}/getUpdates", timeout=timeout)
+    if r.status_code == 401:
+        raise ValueError("봇 토큰이 올바르지 않습니다")
+    r.raise_for_status()
+    found: dict[str, str] = {}
+    for upd in r.json().get("result", []):
+        chat = (upd.get("message") or upd.get("my_chat_member") or {}).get("chat")
+        if chat:
+            name = chat.get("username") or chat.get("first_name") or chat.get("title") or ""
+            found[str(chat["id"])] = name
+    return list(found.items())
+
+
 class TelegramNotifier:
     def __init__(self, token: str, chat_id: str, timeout: float = 10):
         self._url = f"https://api.telegram.org/bot{token}/sendMessage"

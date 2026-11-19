@@ -13,6 +13,10 @@ def find_chat_ids(token: str, timeout: float = 10) -> list[tuple[str, str]]:
     r = requests.get(f"https://api.telegram.org/bot{token}/getUpdates", timeout=timeout)
     if r.status_code == 401:
         raise ValueError("봇 토큰이 올바르지 않습니다")
+    if r.status_code == 409:
+        raise ValueError("이 봇에 webhook 이 설정돼 있거나 다른 프로그램이 메시지를 받고 있습니다. "
+                         "예전 프로그램을 끄고, 필요하면 브라우저에서 "
+                         "https://api.telegram.org/bot<토큰>/deleteWebhook 을 연 뒤 다시 시도하세요")
     r.raise_for_status()
     found: dict[str, str] = {}
     for upd in r.json().get("result", []):
